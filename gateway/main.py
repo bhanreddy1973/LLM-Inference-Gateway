@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 
-from routers import auth, keys
+from routers import auth, chat, keys
 
 app = FastAPI(
     title="LLM Inference Gateway",
@@ -15,6 +15,7 @@ app = FastAPI(
 # Register routers
 app.include_router(auth.router, prefix="/v1")
 app.include_router(keys.router, prefix="/v1")
+app.include_router(chat.router, prefix="/v1")
 
 
 @app.get("/")

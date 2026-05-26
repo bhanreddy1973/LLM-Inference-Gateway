@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from middleware.request_logger import request_logger
-from routers import auth, chat, keys, usage
+from routers import auth, chat, health, keys, models, usage
 
 
 @asynccontextmanager
@@ -32,6 +32,8 @@ app.include_router(auth.router, prefix="/v1")
 app.include_router(keys.router, prefix="/v1")
 app.include_router(chat.router, prefix="/v1")
 app.include_router(usage.router, prefix="/v1")
+app.include_router(health.router, prefix="/v1")
+app.include_router(models.router, prefix="/v1")
 
 
 @app.get("/")

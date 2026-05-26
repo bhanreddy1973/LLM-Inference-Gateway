@@ -1,8 +1,22 @@
 """FastAPI application entry point."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
-from routers import auth, chat, keys
+from middleware.request_logger import request_logger
+from routers import auth, chat, keys, usage
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifecycle — startup and shutdown."""
+    # Startup
+    request_logger.start()
+    yield
+    # Shutdown
+    await request_logger.shutdown()
+
 
 app = FastAPI(
     title="LLM Inference Gateway",
@@ -10,12 +24,14 @@ app = FastAPI(
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # Register routers
 app.include_router(auth.router, prefix="/v1")
 app.include_router(keys.router, prefix="/v1")
 app.include_router(chat.router, prefix="/v1")
+app.include_router(usage.router, prefix="/v1")
 
 
 @app.get("/")

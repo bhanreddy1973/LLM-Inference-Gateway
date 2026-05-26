@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package inference;
+
+option go_package = "github.com/bhanreddy1973/llm-inference-gateway/proto";
+
+// Service definition
+service InferenceService {
+    // Unary — full response at once
+    rpc Infer(InferenceRequest) returns (InferenceResponse);
+
+    // Server streaming — token by token
+    rpc StreamInfer(InferenceRequest) returns (stream StreamChunk);
+
+    // Health check
+    rpc HealthCheck(Empty) returns (HealthResponse);
+}
+
+// Messages
+message Empty {}
+
+message Message {
+    string role = 1;       // "user", "assistant", "system"
+    string content = 2;
+}
+
+message InferenceRequest {
+    string request_id = 1;
+    string model = 2;
+    repeated Message messages = 3;
+    int32 max_tokens = 4;
+    float temperature = 5;
+    float top_p = 6;
+    repeated string stop_sequences = 7;
+}
+
+message InferenceResponse {
+    string request_id = 1;
+    string content = 2;
+    string finish_reason = 3;
+    UsageMetrics usage = 4;
+    PerformanceMetrics performance = 5;
+}
+
+message StreamChunk {
+    string request_id = 1;
+    oneof payload {
+        string delta = 2;           // Text token
+        UsageMetrics usage = 3;     // Final usage (last chunk)
+    }
+    bool done = 4;
+    string finish_reason = 5;
+    PerformanceMetrics performance = 6;
+}
+
+message UsageMetrics {
+    int32 input_tokens = 1;
+    int32 output_tokens = 2;
+    int32 total_tokens = 3;
+}
+
+message PerformanceMetrics {
+    int32 time_to_first_token_ms = 1;
+    int32 total_latency_ms = 2;
+    string worker_id = 3;
+}
+
+message HealthResponse {
+    bool healthy = 1;
+    string version = 2;
+    int32 active_connections = 3;
+}

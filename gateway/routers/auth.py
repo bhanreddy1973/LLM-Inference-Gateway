@@ -1,9 +1,11 @@
 """Auth router — registration and login endpoints."""
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dependencies import get_db
+from dependencies import get_current_user_id, get_db
 from models.schemas import (
     TokenResponse,
     UserLoginRequest,
@@ -73,3 +75,20 @@ async def login(
 
     token = UserService.create_access_token(user.id)
     return TokenResponse(access_token=token)
+
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    summary="Get current user profile",
+)
+async def me(
+    user_id: UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return the authenticated user's profile. Requires JWT Bearer token."""
+    service = UserService(db)
+    user = await service.get_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+    return user

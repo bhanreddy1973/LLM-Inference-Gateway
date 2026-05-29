@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -9,10 +10,8 @@ interface StatCardProps {
   value: string;
   subtitle?: string;
   icon: ReactNode;
-  iconBg?: string;
-  trend?: number;
-  glowClass?: string;
   accentColor?: string;
+  trend?: number;
   children?: ReactNode;
   delay?: number;
 }
@@ -22,10 +21,8 @@ export function StatCard({
   value,
   subtitle,
   icon,
-  iconBg,
-  trend,
-  glowClass,
   accentColor = "#8b5cf6",
+  trend,
   children,
   delay = 0,
 }: StatCardProps) {
@@ -36,89 +33,82 @@ export function StatCard({
     return () => clearTimeout(t);
   }, [delay]);
 
-  const TrendIcon =
-    trend == null ? Minus : trend > 0 ? TrendingUp : TrendingDown;
-  const trendColor =
-    trend == null ? "#6b7280" : trend > 0 ? "#34d399" : "#fb7185";
+  const TrendIcon = trend == null ? Minus : trend > 0 ? TrendingUp : TrendingDown;
+  const trendColor = trend == null ? "#6b7280" : trend > 0 ? "#34d399" : "#fb7185";
 
   return (
-    <div
-      className={cn("glass-card-hover p-5 flex flex-col gap-3", glowClass)}
+    <Card
+      className={cn(
+        "relative overflow-hidden card-glow group transition-all duration-500",
+        !mounted && "opacity-0 translate-y-4"
+      )}
       style={{
-        opacity: mounted ? 1 : 0,
-        transform: mounted ? "translateY(0) scale(1)" : "translateY(16px) scale(0.97)",
-        transition: `opacity 0.5s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.5s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+        transitionDelay: `${delay}ms`,
+        background: `linear-gradient(135deg, ${accentColor}06 0%, transparent 60%)`,
       }}
     >
-      {/* ── Header row ── */}
-      <div className="flex items-start justify-between">
-        {/* Icon */}
+      <CardContent className="relative p-5">
+        {/* Accent glow — top edge */}
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-110"
+          className="absolute top-0 left-4 right-4 h-[1px] opacity-40 group-hover:opacity-70 transition-opacity"
           style={{
-            background: iconBg || `${accentColor}20`,
-            border: `1px solid ${accentColor}30`,
-            boxShadow: `0 0 12px ${accentColor}25`,
+            background: `linear-gradient(90deg, transparent, ${accentColor}60, transparent)`,
           }}
-        >
-          {icon}
-        </div>
+        />
 
-        {/* Trend badge */}
-        {trend != null && (
+        {/* Corner glow orb */}
+        <div
+          className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          style={{
+            background: `radial-gradient(circle, ${accentColor}10 0%, transparent 70%)`,
+            filter: "blur(12px)",
+          }}
+        />
+
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
           <div
-            className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg"
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-105"
             style={{
-              color: trendColor,
-              background: trend > 0 ? "rgba(52,211,153,0.1)" : trend < 0 ? "rgba(251,113,113,0.1)" : "rgba(107,114,128,0.1)",
-              border: `1px solid ${trendColor}25`,
+              background: `linear-gradient(135deg, ${accentColor}15, ${accentColor}08)`,
+              border: `1px solid ${accentColor}20`,
+              boxShadow: `0 0 12px ${accentColor}10`,
             }}
           >
-            <TrendIcon className="w-3 h-3" />
-            {Math.abs(trend).toFixed(1)}%
+            {icon}
           </div>
-        )}
-      </div>
 
-      {/* ── Value ── */}
-      <div>
-        <p
-          className="text-2xl font-bold tracking-tight"
-          style={{
-            color: "var(--color-foreground)",
-            animation: mounted ? "count-rise 0.4s ease-out both" : "none",
-            animationDelay: `${delay + 100}ms`,
-          }}
-        >
+          {trend != null && (
+            <div
+              className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+              style={{
+                color: trendColor,
+                background: trend > 0 ? "rgba(52,211,153,0.08)" : "rgba(251,113,133,0.08)",
+                border: `1px solid ${trendColor}20`,
+              }}
+            >
+              <TrendIcon className="w-3 h-3" />
+              {Math.abs(trend).toFixed(1)}%
+            </div>
+          )}
+        </div>
+
+        {/* Value */}
+        <p className="text-2xl font-bold tracking-tight text-foreground leading-none stat-value">
           {value}
         </p>
-        <p
-          className="text-sm font-medium mt-0.5"
-          style={{ color: "var(--color-muted-foreground)" }}
-        >
+        <p className="text-sm mt-1.5 font-medium text-muted-foreground">
           {title}
         </p>
         {subtitle && (
-          <p
-            className="text-xs mt-0.5 truncate"
-            style={{ color: "var(--color-muted-foreground)", opacity: 0.55 }}
-          >
+          <p className="text-[11px] mt-0.5 truncate text-muted-foreground/50">
             {subtitle}
           </p>
         )}
-      </div>
 
-      {/* ── Accent bar ── */}
-      <div
-        className="h-px rounded-full"
-        style={{
-          background: `linear-gradient(90deg, ${accentColor}50, transparent)`,
-          opacity: 0.6,
-        }}
-      />
-
-      {/* ── Sparkline slot ── */}
-      {children && <div className="h-12">{children}</div>}
-    </div>
+        {/* Sparkline slot */}
+        {children && <div className="mt-4 h-12">{children}</div>}
+      </CardContent>
+    </Card>
   );
 }

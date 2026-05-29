@@ -45,7 +45,12 @@ export const authApi = {
     request<TokenResponse>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
   register: (body: RegisterRequest) =>
     request<UserProfile>("/auth/register", { method: "POST", body: JSON.stringify(body) }),
-  me: () => request<UserProfile>("/auth/me", {}, true),
+  me: (bearerToken?: string) =>
+    request<UserProfile>(
+      "/auth/me",
+      bearerToken ? { headers: { Authorization: `Bearer ${bearerToken}` } } : {},
+      !bearerToken,
+    ),
 };
 
 // Keys

@@ -1,113 +1,108 @@
 "use client";
 
-import { Database, Server, Radio, BarChart2 } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Database, Server, Radio, BarChart2, CheckCircle2, AlertCircle } from "lucide-react";
 import type { HealthStatus } from "@/types/api";
 
 const SERVICES = [
-  { key: "postgres",   label: "PostgreSQL",  Icon: Database,  accentColor: "#a78bfa" },
-  { key: "redis",      label: "Redis",       Icon: Server,    accentColor: "#22d3ee" },
-  { key: "worker",     label: "gRPC Worker", Icon: Radio,     accentColor: "#34d399" },
-  { key: "clickhouse", label: "ClickHouse",  Icon: BarChart2, accentColor: "#fbbf24" },
+  { key: "postgres",   label: "PostgreSQL",  Icon: Database,  color: "#a78bfa" },
+  { key: "redis",      label: "Redis",       Icon: Server,    color: "#22d3ee" },
+  { key: "worker",     label: "gRPC Worker", Icon: Radio,     color: "#34d399" },
+  { key: "clickhouse", label: "ClickHouse",  Icon: BarChart2, color: "#fbbf24" },
 ] as const;
 
-type ServiceStatus = "healthy" | "degraded" | "unhealthy" | undefined;
+type SvcStatus = "healthy" | "degraded" | "unhealthy" | undefined;
 
-const STATUS_MAP = {
-  healthy:   { dot: "status-dot-healthy",   label: "Healthy",  color: "#34d399" },
-  degraded:  { dot: "status-dot-degraded",  label: "Degraded", color: "#fbbf24" },
-  unhealthy: { dot: "status-dot-unhealthy", label: "Down",     color: "#f87171" },
+const STATUS_CFG = {
+  healthy:   { label: "Healthy",  dotClass: "dot-healthy",   color: "#34d399" },
+  degraded:  { label: "Degraded", dotClass: "dot-degraded",  color: "#fbbf24" },
+  unhealthy: { label: "Down",     dotClass: "dot-unhealthy", color: "#fb7185" },
 };
 
-function StatusDot({ status }: { status: ServiceStatus }) {
-  const s = STATUS_MAP[status ?? "unhealthy"];
-  return (
-    <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: s.color }}>
-      <span className={s.dot} />
-      {s.label}
-    </span>
-  );
-}
-
 export function HealthPanel({ health }: { health?: HealthStatus }) {
-  const allHealthy = SERVICES.every(
-    (s) => health?.[s.key]?.status === "healthy",
-  );
+  const allHealthy = SERVICES.every((s) => health?.[s.key]?.status === "healthy");
+  const anyData = !!health;
 
   return (
-    <div className="glass-card p-5 h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-semibold" style={{ color: "var(--color-foreground)" }}>
-          System Health
-        </p>
-        <span
-          className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-          style={
-            allHealthy
-              ? { background: "rgba(52,211,153,0.1)", color: "#34d399", border: "1px solid rgba(52,211,153,0.25)" }
-              : { background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.25)" }
-          }
-        >
-          <span
-            style={{
-              display: "inline-block",
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              background: allHealthy ? "#34d399" : "#fbbf24",
-              boxShadow: `0 0 6px ${allHealthy ? "#34d399" : "#fbbf24"}`,
-              animation: "live-dot 1.8s ease-in-out infinite",
-            }}
-          />
-          {allHealthy ? "All Systems Go" : "Degraded"}
-        </span>
-      </div>
+    <Card className="h-full relative overflow-hidden">
+      {/* Subtle corner accent */}
+      <div
+        className="absolute top-0 right-0 w-32 h-32 opacity-30"
+        style={{
+          background: allHealthy
+            ? "radial-gradient(circle at 100% 0%, rgba(52,211,153,0.12) 0%, transparent 70%)"
+            : "radial-gradient(circle at 100% 0%, rgba(251,191,36,0.12) 0%, transparent 70%)",
+        }}
+      />
 
-      {/* Service grid */}
-      <div className="space-y-2">
-        {SERVICES.map(({ key, label, Icon, accentColor }, idx) => {
-          const svc = health?.[key];
-          const status = svc?.status as ServiceStatus;
-          const isHealthy = status === "healthy";
+      <CardHeader className="flex-row items-center justify-between space-y-0 pb-0">
+        <CardTitle className="text-sm font-semibold">System Health</CardTitle>
+        {anyData && (
+          <Badge
+            variant="outline"
+            className="h-auto text-[11px] font-semibold gap-1.5 px-2.5 py-1 rounded-full"
+            style={
+              allHealthy
+                ? { background: "rgba(52,211,153,0.08)", color: "#34d399", borderColor: "rgba(52,211,153,0.2)" }
+                : { background: "rgba(251,191,36,0.08)", color: "#fbbf24", borderColor: "rgba(251,191,36,0.2)" }
+            }
+          >
+            {allHealthy
+              ? <CheckCircle2 className="w-3 h-3" />
+              : <AlertCircle className="w-3 h-3" />
+            }
+            {allHealthy ? "All Systems Go" : "Degraded"}
+          </Badge>
+        )}
+      </CardHeader>
+
+      <CardContent className="space-y-2 pt-4">
+        {SERVICES.map(({ key, label, Icon, color }, idx) => {
+          const svc    = health?.[key];
+          const status = (svc?.status ?? "unhealthy") as SvcStatus;
+          const cfg    = STATUS_CFG[status ?? "unhealthy"];
+          const ok     = status === "healthy";
 
           return (
             <div
               key={key}
-              className="flex items-center justify-between p-2.5 rounded-xl transition-all duration-300"
+              className="group flex items-center justify-between p-3 rounded-xl transition-all duration-200 hover:scale-[1.01]"
               style={{
-                background: isHealthy
-                  ? "rgba(52,211,153,0.04)"
-                  : "rgba(255,255,255,0.025)",
-                border: `1px solid ${isHealthy ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.05)"}`,
-                animationDelay: `${idx * 0.06}s`,
+                background: ok ? `${color}06` : "rgba(255,255,255,0.015)",
+                border: `1px solid ${ok ? `${color}12` : "rgba(255,255,255,0.04)"}`,
+                opacity: anyData ? 1 : 0.4,
+                animationDelay: `${idx * 80}ms`,
               }}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <div
-                  className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200 group-hover:scale-105"
                   style={{
-                    background: `${accentColor}15`,
-                    border: `1px solid ${accentColor}20`,
+                    background: `linear-gradient(135deg, ${color}12, ${color}06)`,
+                    border: `1px solid ${color}18`,
+                    boxShadow: ok ? `0 0 8px ${color}10` : "none",
                   }}
                 >
                   <Icon
-                    className="w-3 h-3"
-                    style={{ color: isHealthy ? accentColor : "var(--color-muted-foreground)" }}
+                    className="w-3.5 h-3.5"
+                    style={{ color: ok ? color : "var(--color-text-3)" }}
+                    strokeWidth={1.8}
                   />
                 </div>
-                <span
-                  className="text-xs font-medium"
-                  style={{ color: isHealthy ? "var(--color-card-foreground)" : "var(--color-muted-foreground)" }}
-                >
+                <span className="text-xs font-medium" style={{ color: ok ? "var(--color-text)" : "var(--color-text-3)" }}>
                   {label}
                 </span>
               </div>
 
-              <StatusDot status={status} />
+              <span className="flex items-center gap-2 text-[11px] font-semibold" style={{ color: cfg.color }}>
+                <span className={cfg.dotClass} />
+                {cfg.label}
+              </span>
             </div>
           );
         })}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

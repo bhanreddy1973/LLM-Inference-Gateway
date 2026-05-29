@@ -8,11 +8,19 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt .
+COPY gateway/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy application code first
+COPY gateway/ .
+
+# Generate proto stubs (overwrites any stale local copies)
+COPY proto/inference.proto /tmp/inference.proto
+RUN python -m grpc_tools.protoc \
+    -I /tmp/ \
+    --python_out=/app/ \
+    --grpc_python_out=/app/ \
+    /tmp/inference.proto
 
 EXPOSE 8000
 

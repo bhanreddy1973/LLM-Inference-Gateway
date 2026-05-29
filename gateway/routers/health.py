@@ -1,5 +1,7 @@
 """Health check router — liveness and readiness probes."""
 
+import time
+
 import redis.asyncio as redis
 from fastapi import APIRouter
 from sqlalchemy import text
@@ -9,6 +11,8 @@ from dependencies import async_session
 from services.inference_client import inference_client
 
 router = APIRouter(tags=["health"])
+
+_start_time = time.time()
 
 
 @router.get(
@@ -76,3 +80,59 @@ async def readiness():
             "checks": checks,
         },
     )
+
+
+@router.get(
+    "/health/status",
+    summary="Extended health status for dashboard",
+)
+async def health_status():
+    """
+    Extended health check with per-service details for the dashboard.
+    No authentication required — safe to poll publicly.
+    """
+    result: dict = {
+        "gateway": {"status": "healthy", "uptime_seconds": int(time.time() - _start_time)},
+    }
+
+    # PostgreSQL
+    try:
+        async with async_session() as session:
+            await session.execute(text("SELECT 1"))
+        result["postgres"] = {"status": "healthy"}
+    except Exception:
+        result["postgres"] = {"status": "unhealthy"}
+
+    # Redis
+    try:
+        redis_client = redis.from_url(settings.redis_url, decode_responses=True)
+        await redis_client.ping()
+        info = await redis_client.info("memory")
+        used_mb = round(info.get("used_memory", 0) / 1_048_576, 2)
+        await redis_client.aclose()
+        result["redis"] = {"status": "healthy", "used_memory_mb": used_mb}
+    except Exception:
+        result["redis"] = {"status": "unhealthy"}
+
+    # gRPC Worker + circuit breaker state
+    try:
+        worker_health = await inference_client.health_check()
+        cb_state = worker_health.get("circuit_breaker_state", "unknown")
+        result["worker"] = {
+            "status": "healthy" if worker_health.get("healthy") else "unhealthy",
+            "circuit_breaker": cb_state,
+            "active_connections": worker_health.get("active_connections", 0),
+        }
+    except Exception:
+        result["worker"] = {"status": "unhealthy", "circuit_breaker": "unknown"}
+
+    # ClickHouse
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            resp = await client.get(f"http://{settings.clickhouse_host}:{settings.clickhouse_http_port}/ping")
+        result["clickhouse"] = {"status": "healthy" if resp.status_code == 200 else "degraded"}
+    except Exception:
+        result["clickhouse"] = {"status": "unhealthy"}
+
+    return result

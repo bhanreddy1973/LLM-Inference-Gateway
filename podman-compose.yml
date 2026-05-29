@@ -3,8 +3,8 @@ version: "3.9"
 services:
   gateway:
     build:
-      context: ./gateway
-      dockerfile: Containerfile
+      context: .
+      dockerfile: gateway/Containerfile
     ports:
       - "8000:8000"
     environment:
@@ -24,13 +24,22 @@ services:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
-      worker:
-        condition: service_started
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Containerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_GATEWAY_URL=http://localhost:8000
+    depends_on:
+      - gateway
 
   worker:
     build:
-      context: ./worker
-      dockerfile: Containerfile
+      context: .
+      dockerfile: worker/Containerfile
     ports:
       - "50051:50051"
     environment:
@@ -49,7 +58,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gateway"]
+      test: ["CMD-SHELL", "pg_isready -U gateway -d inference_gw"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -69,7 +78,7 @@ services:
     image: docker.io/clickhouse/clickhouse-server:24.8
     ports:
       - "8123:8123"
-      - "9000:9000"
+      - "9001:9000"
     volumes:
       - ch_data:/var/lib/clickhouse
       - ./scripts/init_clickhouse.sql:/docker-entrypoint-initdb.d/init.sql

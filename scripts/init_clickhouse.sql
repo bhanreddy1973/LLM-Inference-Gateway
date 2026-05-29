@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS inference_logs (
 ) ENGINE = MergeTree()
 PARTITION BY toYYYYMM(created_at)
 ORDER BY (user_id, created_at)
-TTL created_at + INTERVAL 90 DAY;
+TTL toDateTime(created_at) + INTERVAL 90 DAY;
 
 -- Materialized view for real-time per-user daily stats
 CREATE MATERIALIZED VIEW IF NOT EXISTS user_usage_daily

@@ -67,6 +67,10 @@ class ApiKey(Base):
     created_at = Column(DateTime(timezone=True), server_default=text("NOW()"))
     expires_at = Column(DateTime(timezone=True), nullable=True)
     last_used_at = Column(DateTime(timezone=True), nullable=True)
+    # Per-key custom limits — override user tier when set
+    requests_per_minute = Column(Integer, nullable=True)
+    requests_per_day = Column(Integer, nullable=True)
+    max_tokens_per_request = Column(Integer, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="api_keys")

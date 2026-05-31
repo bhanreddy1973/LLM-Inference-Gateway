@@ -3,6 +3,7 @@ fastapi==0.115.0
 uvicorn[standard]==0.30.0
 pydantic==2.9.0
 pydantic-settings==2.5.0
+email-validator>=2.0.0
 
 # Database
 sqlalchemy[asyncio]==2.0.32
@@ -13,13 +14,14 @@ alembic==1.13.0
 redis[hiredis]==5.1.0
 
 # gRPC client
-grpcio==1.66.0
-grpcio-tools==1.66.0
-protobuf==5.28.0
+grpcio>=1.70.0
+grpcio-tools>=1.70.0
+protobuf>=6.0.0
 
 # Auth
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 
 # ClickHouse
 clickhouse-connect==0.7.19

@@ -1,6 +1,17 @@
 version: "3.9"
 
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Containerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - gateway
+
   gateway:
     build:
       context: ./gateway
@@ -17,6 +28,7 @@ services:
       - JWT_SECRET=change-me-in-production
       - JWT_ALGORITHM=HS256
       - JWT_EXPIRY_MINUTES=30
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001
     depends_on:
       postgres:
         condition: service_healthy
@@ -24,8 +36,6 @@ services:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
-      worker:
-        condition: service_started
 
   worker:
     build:
@@ -49,7 +59,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gateway"]
+      test: ["CMD-SHELL", "pg_isready -U gateway -d inference_gw"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -69,10 +79,11 @@ services:
     image: docker.io/clickhouse/clickhouse-server:24.8
     ports:
       - "8123:8123"
-      - "9000:9000"
+      - "9001:9000"
     volumes:
       - ch_data:/var/lib/clickhouse
       - ./scripts/init_clickhouse.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./scripts/clickhouse-config/default-user.xml:/etc/clickhouse-server/users.d/default-user.xml
     healthcheck:
       test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
       interval: 5s

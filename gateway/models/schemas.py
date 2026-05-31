@@ -46,6 +46,17 @@ class TokenResponse(BaseModel):
 class ApiKeyCreateRequest(BaseModel):
     """Request body for creating an API key."""
     name: str = Field(default="Default Key", max_length=100)
+    requests_per_minute: Optional[int] = Field(default=None, ge=1, le=10000)
+    requests_per_day: Optional[int] = Field(default=None, ge=1)
+    max_tokens_per_request: Optional[int] = Field(default=None, ge=1, le=200000)
+
+
+class ApiKeyUpdateRequest(BaseModel):
+    """Request body for updating a key’s limits or name."""
+    name: Optional[str] = Field(default=None, max_length=100)
+    requests_per_minute: Optional[int] = Field(default=None, ge=1, le=10000)
+    requests_per_day: Optional[int] = Field(default=None, ge=1)
+    max_tokens_per_request: Optional[int] = Field(default=None, ge=1, le=200000)
 
 
 class ApiKeyCreateResponse(BaseModel):
@@ -55,6 +66,9 @@ class ApiKeyCreateResponse(BaseModel):
     key_prefix: str
     name: str
     created_at: datetime
+    requests_per_minute: Optional[int] = None
+    requests_per_day: Optional[int] = None
+    max_tokens_per_request: Optional[int] = None
 
 
 class ApiKeyListResponse(BaseModel):
@@ -65,9 +79,48 @@ class ApiKeyListResponse(BaseModel):
     is_active: bool
     created_at: datetime
     last_used_at: Optional[datetime] = None
+    requests_per_minute: Optional[int] = None
+    requests_per_day: Optional[int] = None
+    max_tokens_per_request: Optional[int] = None
 
     class Config:
         from_attributes = True
+
+
+# ─── User Update Schema ────────────────────────────────────────────────────────────────
+
+class UserUpdateRequest(BaseModel):
+    """Update profile fields."""
+    name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    current_password: Optional[str] = None
+    new_password: Optional[str] = Field(default=None, min_length=8, max_length=128)
+
+
+# ─── Usage Log Schema ───────────────────────────────────────────────────────────────────
+
+class UsageLogEntry(BaseModel):
+    """Single request log row."""
+    request_id: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+    total_latency_ms: int
+    time_to_first_token_ms: int
+    status_code: int
+    finish_reason: str
+    stream: bool
+    temperature: float
+    estimated_cost_usd: float
+    api_key_prefix: str
+    created_at: str
+
+
+class UsageLogsResponse(BaseModel):
+    items: list[UsageLogEntry]
+    total: int
+    page: int
+    page_size: int
 
 
 # ─── Chat Schemas ───────────────────────────────────────────────────────────

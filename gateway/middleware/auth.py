@@ -107,13 +107,14 @@ async def validate_api_key(
     # Determine rate limits from tier
     tier_limits = _get_tier_limits(user.tier)
 
+    # Key-level limits override tier defaults when set
     ctx = RequestContext(
         user_id=user.id,
         tier=user.tier,
         key_prefix=api_key_obj.key_prefix,
-        requests_per_minute=tier_limits["requests_per_minute"],
-        requests_per_day=tier_limits["requests_per_day"],
-        max_tokens_per_request=tier_limits["max_tokens_per_request"],
+        requests_per_minute=api_key_obj.requests_per_minute or tier_limits["requests_per_minute"],
+        requests_per_day=api_key_obj.requests_per_day or tier_limits["requests_per_day"],
+        max_tokens_per_request=api_key_obj.max_tokens_per_request or tier_limits["max_tokens_per_request"],
     )
 
     # Cache in Redis

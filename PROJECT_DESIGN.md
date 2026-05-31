@@ -1,5 +1,45 @@
 # LLM Inference Gateway — Project Design Document
 
+> **Implementation status:** Fully built and running. See [`README.md`](./README.md) for quick-start instructions.
+
+## What Was Built (Implementation Summary)
+
+### Backend (FastAPI + gRPC)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| User registration & JWT login | ✅ | `POST /v1/auth/register`, `POST /v1/auth/login` |
+| Profile & password update | ✅ | `PATCH /v1/auth/me` |
+| API key CRUD | ✅ | `GET/POST /v1/keys`, `PATCH/DELETE /v1/keys/{id}` |
+| Per-key custom rate limits | ✅ | `requests_per_minute`, `requests_per_day`, `max_tokens_per_request` columns on `api_keys` |
+| Redis sliding-window rate limiter | ✅ | Lua script, key-level limits override tier defaults |
+| gRPC inference worker | ✅ | Circuit breaker + exponential backoff |
+| Streaming SSE chat | ✅ | `POST /v1/chat/stream`, OpenAI-compatible format |
+| ClickHouse async logging | ✅ | Batched inserts, `inference_logs` table + `user_usage_daily` materialized view |
+| Analytics API | ✅ | `GET /v1/usage/analytics?days=N` — time-series, model breakdown |
+| Request logs API | ✅ | `GET /v1/usage/logs` — paginated, filterable by model/status/days |
+| System health probes | ✅ | `GET /v1/health`, `GET /v1/health/ready` |
+| Database migrations | ✅ | Alembic: `001_initial_schema`, `002_key_custom_limits` |
+
+### Frontend (Next.js 16 Dashboard)
+
+| Page | Route | Status |
+|------|-------|--------|
+| Landing page | `/` | ✅ |
+| Login | `/login` | ✅ |
+| Register | `/register` | ✅ |
+| Forgot password | `/forgot-password` | ✅ |
+| Overview dashboard | `/dashboard` | ✅ |
+| API Keys manager | `/dashboard/keys` | ✅ with custom limit UI |
+| Analytics | `/dashboard/usage` | ✅ 4-chart grid |
+| Request Logs | `/dashboard/logs` | ✅ filterable, paginated |
+| Playground | `/dashboard/playground` | ✅ streaming SSE chat |
+| System Status | `/dashboard/status` | ✅ live health + 40-slot history |
+| Settings | `/dashboard/settings` | ✅ profile + tier info |
+
+---
+
+
 ## 1. Executive Summary
 
 A self-hostable, production-grade API gateway that sits in front of Anthropic Claude models and provides:
@@ -444,16 +484,19 @@ GROUP BY user_id, day, model;
 |--------|----------|-------------|------|
 | `POST` | `/auth/register` | Register new user | None |
 | `POST` | `/auth/login` | Get JWT token | None |
-| `POST` | `/keys` | Create API key | JWT |
-| `GET` | `/keys` | List user's API keys | JWT |
+| `GET` | `/auth/me` | Get current user + tier | JWT |
+| `PATCH` | `/auth/me` | Update name or password | JWT |
+| `POST` | `/keys` | Create API key (with optional per-key limits) | JWT |
+| `GET` | `/keys` | List all API keys | JWT |
+| `PATCH` | `/keys/{key_id}` | Update key name / rate limits | JWT |
 | `DELETE` | `/keys/{key_id}` | Revoke an API key | JWT |
 | `POST` | `/chat` | Chat completion (non-streaming) | API Key |
 | `POST` | `/chat/stream` | Chat completion (SSE streaming) | API Key |
 | `GET` | `/models` | List available models | API Key |
-| `GET` | `/usage` | Get usage stats for current key | API Key |
-| `GET` | `/usage/analytics` | Detailed analytics (ClickHouse) | JWT |
-| `GET` | `/health` | Health check | None |
-| `GET` | `/health/ready` | Readiness probe (all deps up) | None |
+| `GET` | `/usage/analytics` | Time-series analytics (ClickHouse) | JWT |
+| `GET` | `/usage/logs` | Paginated request logs with filters | JWT |
+| `GET` | `/health` | Liveness probe | None |
+| `GET` | `/health/ready` | Readiness probe (checks all deps) | None |
 
 ### Request/Response Examples
 
@@ -681,16 +724,33 @@ llm-inference-gateway/
 │   ├── alembic.ini
 │   ├── env.py
 │   └── versions/
-│       └── 001_initial_schema.py
+│       ├── 001_initial_schema.py  # Users, api_keys, indexes
+│       └── 002_key_custom_limits.py # Per-key RPM/RPD/max-token columns
 │
 ├── scripts/
-│   ├── init_clickhouse.sql        # ClickHouse table creation
-│   ├── seed_data.py               # Seed test users and keys
-│   └── load_test.py               # Locust load testing script
+│   ├── init_clickhouse.sql        # ClickHouse table + materialized view
+│   ├── seed_data.py               # Seed 3 test users (free/pro/enterprise)
+│   └── clickhouse-config/
+│       └── default-user.xml       # Allow ClickHouse connections from containers
 │
-└── docs/
-    ├── ARCHITECTURE.md            # Detailed arch for contributors
-    └── API_REFERENCE.md           # Auto-generated from OpenAPI
+└── frontend/                      # Next.js 16 dashboard (port 3000)
+    ├── Containerfile
+    ├── app/
+    │   ├── (marketing)/           # Public landing page (own layout)
+    │   ├── login/                 # Sign in
+    │   ├── register/              # Create account
+    │   ├── forgot-password/       # Password reset
+    │   └── dashboard/             # Protected area (auth guard in layout.tsx)
+    │       ├── layout.tsx         # Sidebar + getMe() auth guard
+    │       ├── page.tsx           # Overview
+    │       ├── keys/              # API key management
+    │       ├── usage/             # Analytics charts
+    │       ├── logs/              # Request log inspector
+    │       ├── playground/        # Streaming chat UI
+    │       ├── status/            # System health
+    │       └── settings/          # Account + tier
+    └── lib/
+        └── api.ts                 # All typed fetch wrappers + ApiError class
 ```
 
 ---

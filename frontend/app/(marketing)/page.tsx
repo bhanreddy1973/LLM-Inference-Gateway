@@ -78,9 +78,11 @@ export default function Page() {
           </h1>
 
           <div className="mb-14 flex flex-wrap justify-center gap-2.5 max-[820px]:mb-24">
-            <Button id="download-btn" className="h-auto rounded-[10px] px-[22px] py-3.5 text-[15px] font-semibold">
-              Try out now
-            </Button>
+            <Link href="/register">
+              <Button id="download-btn" className="h-auto rounded-[10px] px-[22px] py-3.5 text-[15px] font-semibold">
+                Try out now
+              </Button>
+            </Link>
             <Link
               href="https://github.com/bhanreddy1973/LLM-Inference-Gateway"
               target="_blank"
@@ -132,9 +134,11 @@ export default function Page() {
             Unified APIs, smart routing, observability, and failover for every major LLM provider — through a single gateway.
           </p>
           <div className="mb-6 flex flex-wrap justify-center gap-2.5">
-            <Button variant="default" className="h-auto rounded-[10px] px-[22px] py-3.5 text-[15px] font-semibold">
-              Try out now
-            </Button>
+            <Link href="/register">
+              <Button variant="default" className="h-auto rounded-[10px] px-[22px] py-3.5 text-[15px] font-semibold">
+                Try out now
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

@@ -8,7 +8,6 @@ Falls back to gRPC when GRPC_WORKER_HOST is set to a remote host.
 
 import os
 import sys
-import time
 import uuid
 from typing import AsyncGenerator
 

@@ -7,7 +7,6 @@ import {
   ChevronDown,
   Copy,
   Key,
-  Loader2,
   RotateCcw,
   Send,
   Settings2,
@@ -311,7 +310,7 @@ export default function PlaygroundPage() {
   // Keys
   const [keys, setKeys]           = useState<ApiKey[]>([]);
   const [keysLoading, setKL]      = useState(true);
-  const [selectedKey, setKey]     = useState("");
+  const [, setKey]                = useState("");
 
   // Model + params
   const [model, setModel]         = useState(MODELS[0].id);

@@ -23,7 +23,6 @@ import {
   Tooltip,
   Legend,
 } from "@/components/evilcharts/charts/area-chart";
-import { type ChartConfig } from "@/components/evilcharts/ui/chart";
 import { getAnalytics, listApiKeys, type AnalyticsResponse, type ApiKey } from "@/lib/api";
 import { useDemo } from "@/lib/demo-context";
 import { DEMO_ANALYTICS, DEMO_KEYS } from "@/lib/demo-data";

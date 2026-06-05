@@ -30,17 +30,28 @@ app = FastAPI(
 )
 
 # CORS — allow frontend origins
-cors_origins = os.getenv(
+cors_origins_raw = os.getenv(
     "CORS_ORIGINS",
     "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001",
-).split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
 )
+
+if cors_origins_raw.strip() == "*":
+    # Allow all origins (no credentials restriction)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o.strip() for o in cors_origins_raw.split(",")],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Register routers
 app.include_router(auth.router, prefix="/v1")

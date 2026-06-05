@@ -43,14 +43,16 @@ def test_api_key_hash_different_for_different_keys():
 
 def test_generate_api_key_format():
     """Generated API keys should follow sk-live-* format."""
-    key = generate_api_key()
-    assert key.startswith("sk-live-")
-    assert len(key) > 20
+    full_key, key_prefix, key_hash = generate_api_key()
+    assert full_key.startswith("sk-live-")
+    assert len(full_key) > 20
+    assert key_prefix == full_key[:12]
+    assert len(key_hash) == 64
 
 
 def test_generate_api_key_unique():
     """Each generated key should be unique."""
-    keys = {generate_api_key() for _ in range(100)}
+    keys = {generate_api_key()[0] for _ in range(100)}
     assert len(keys) == 100
 
 

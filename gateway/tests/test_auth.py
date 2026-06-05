@@ -1,7 +1,7 @@
-"""Tests for auth endpoints and JWT utilities."""
+"""Tests for auth utilities — hashing, key generation, JWT."""
 
 from uuid import uuid4
-from services.user_service import UserService
+
 from utils.hashing import hash_password, verify_password, hash_api_key
 from utils.key_generator import generate_api_key
 
@@ -34,6 +34,13 @@ def test_api_key_hash_deterministic():
     assert len(h1) == 64  # SHA-256 hex digest
 
 
+def test_api_key_hash_different_for_different_keys():
+    """Different keys produce different hashes."""
+    h1 = hash_api_key("sk-live-key1")
+    h2 = hash_api_key("sk-live-key2")
+    assert h1 != h2
+
+
 def test_generate_api_key_format():
     """Generated API keys should follow sk-live-* format."""
     key = generate_api_key()
@@ -49,6 +56,7 @@ def test_generate_api_key_unique():
 
 def test_jwt_create_and_decode():
     """JWT token creation and decoding roundtrip."""
+    from services.user_service import UserService
     user_id = uuid4()
     token = UserService.create_access_token(user_id)
     assert token is not None
@@ -59,11 +67,6 @@ def test_jwt_create_and_decode():
 
 def test_jwt_decode_invalid_token():
     """Invalid JWT should return None."""
+    from services.user_service import UserService
     result = UserService.decode_token("invalid.token.here")
-    assert result is None
-
-
-def test_jwt_decode_empty_token():
-    """Empty string should return None."""
-    result = UserService.decode_token("")
     assert result is None

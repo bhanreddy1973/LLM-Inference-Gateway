@@ -90,7 +90,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Lint
-        run: pnpm lint
+        run: pnpm lint --max-warnings 20
 
       - name: Build
         run: pnpm build

@@ -27,6 +27,8 @@ import {
   type ApiKey,
   type ApiKeyCreated,
 } from "@/lib/api";
+import { useDemo } from "@/lib/demo-context";
+import { DEMO_KEYS, DEMO_USER } from "@/lib/demo-data";
 
 // ─── Tier limits (mirrors backend) ───────────────────────────────────────────────
 const TIER_DEFAULTS: Record<string, { rpm: number; rpd: number; mtr: number }> = {
@@ -413,17 +415,24 @@ export default function KeysPage() {
   const [newKey, setNewKey]           = useState<ApiKeyCreated | null>(null);
   const [editKey, setEditKey]         = useState<ApiKey | null>(null);
   const [revokeKey, setRevokeKey]     = useState<ApiKey | null>(null);
+  const isDemo = useDemo();
 
   // Resolve tier limits dynamically
   const td = getTierDefaults(tier);
   const tierRpm = td.rpm; const tierRpd = td.rpd; const tierMtr = td.mtr;
 
   useEffect(() => {
+    if (isDemo) {
+      setKeys(DEMO_KEYS);
+      setTier(DEMO_USER.tier);
+      setLoading(false);
+      return;
+    }
     Promise.all([listApiKeys(), getMe()])
       .then(([ks, u]) => { setKeys(ks); setTier(u.tier); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [isDemo]);
 
   function handleCreated(key: ApiKeyCreated) {
     setKeys((prev) => [key, ...prev]);
@@ -487,7 +496,7 @@ export default function KeysPage() {
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
-          {k.is_active && (
+          {k.is_active && !isDemo && (
             <>
               <button
                 onClick={() => setEditKey(k)}
@@ -524,7 +533,9 @@ export default function KeysPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex h-9 items-center gap-2 rounded-xl bg-gradient-to-b from-white to-zinc-100 px-4 text-[13px] font-medium text-zinc-900 shadow-[0_1px_0_1px_rgba(0,0,0,0.1)] transition hover:-translate-y-0.5 hover:shadow-[0_4px_16px_-4px_rgba(255,255,255,0.2)]"
+          disabled={isDemo}
+          title={isDemo ? "Sign in to create API keys" : undefined}
+          className="flex h-9 items-center gap-2 rounded-xl bg-gradient-to-b from-white to-zinc-100 px-4 text-[13px] font-medium text-zinc-900 shadow-[0_1px_0_1px_rgba(0,0,0,0.1)] transition hover:-translate-y-0.5 hover:shadow-[0_4px_16px_-4px_rgba(255,255,255,0.2)] disabled:pointer-events-none disabled:opacity-40"
         >
           <Plus className="size-4" />
           New Key

@@ -14,6 +14,8 @@ import {
   Zap,
 } from "lucide-react";
 import { getMe, updateMe, type UserResponse } from "@/lib/api";
+import { useDemo } from "@/lib/demo-context";
+import { DEMO_USER } from "@/lib/demo-data";
 
 // ─── Tier config (mirrors backend) ───────────────────────────────────────────
 
@@ -106,6 +108,7 @@ function LimitRow({ label, limit }: { label: string; limit: number | null }) {
 export default function SettingsPage() {
   const [user, setUser]           = useState<UserResponse | null>(null);
   const [loading, setLoading]     = useState(true);
+  const isDemo = useDemo();
 
   // Profile form
   const [name, setName]           = useState("");
@@ -129,13 +132,20 @@ export default function SettingsPage() {
   useEffect(() => { document.title = "Settings · Acheron"; }, []);
 
   useEffect(() => {
+    if (isDemo) {
+      setUser(DEMO_USER);
+      setName(DEMO_USER.name);
+      setLoading(false);
+      return;
+    }
     getMe()
       .then((u) => { setUser(u); setName(u.name); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [isDemo]);
 
   async function saveName() {
+    if (isDemo) { showToast("Please sign in to update your profile.", "error"); return; }
     if (!name.trim() || name === user?.name) return;
     setNL(true);
     try {
@@ -150,6 +160,7 @@ export default function SettingsPage() {
   }
 
   async function savePassword() {
+    if (isDemo) { showToast("Please sign in to change your password.", "error"); return; }
     if (!curPw || !newPw) return;
     if (newPw !== confirmPw) { showToast("New passwords don't match.", "error"); return; }
     if (newPw.length < 8) { showToast("Password must be at least 8 characters.", "error"); return; }

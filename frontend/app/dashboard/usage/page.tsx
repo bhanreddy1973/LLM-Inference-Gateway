@@ -36,6 +36,8 @@ import {
   Tooltip as LineTooltip,
 } from "@/components/evilcharts/charts/line-chart";
 import { getAnalytics, type AnalyticsResponse, type DailyUsage, type ModelUsage } from "@/lib/api";
+import { useDemo } from "@/lib/demo-context";
+import { DEMO_ANALYTICS } from "@/lib/demo-data";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -149,18 +151,24 @@ export default function UsagePage() {
   const [data, setData]           = useState<AnalyticsResponse | null>(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState("");
+  const isDemo = useDemo();
 
   // Set page title
   useEffect(() => { document.title = "Analytics · Acheron"; }, []);
 
   useEffect(() => {
+    if (isDemo) {
+      setData(DEMO_ANALYTICS);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     getAnalytics(period)
       .then(setData)
       .catch(() => setError("Failed to load analytics. Make sure the backend is running."))
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, isDemo]);
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {

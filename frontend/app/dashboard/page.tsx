@@ -25,6 +25,8 @@ import {
 } from "@/components/evilcharts/charts/area-chart";
 import { type ChartConfig } from "@/components/evilcharts/ui/chart";
 import { getAnalytics, listApiKeys, type AnalyticsResponse, type ApiKey } from "@/lib/api";
+import { useDemo } from "@/lib/demo-context";
+import { DEMO_ANALYTICS, DEMO_KEYS } from "@/lib/demo-data";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -100,16 +102,23 @@ export default function DashboardPage() {
   const [keys, setKeys]           = useState<ApiKey[]>([]);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState("");
+  const isDemo = useDemo();
 
   // Set page title
   useEffect(() => { document.title = "Overview · Acheron"; }, []);
 
   useEffect(() => {
+    if (isDemo) {
+      setAnalytics(DEMO_ANALYTICS);
+      setKeys(DEMO_KEYS);
+      setLoading(false);
+      return;
+    }
     Promise.all([getAnalytics(30), listApiKeys()])
       .then(([a, k]) => { setAnalytics(a); setKeys(k); })
       .catch(() => setError("Failed to load dashboard data. Make sure the backend is running."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isDemo]);
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (loading) {

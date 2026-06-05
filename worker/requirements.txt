@@ -6,6 +6,10 @@ protobuf>=6.0.0
 # Anthropic SDK
 anthropic>=0.40.0
 
+# OpenAI SDK (used for OpenRouter)
+openai>=1.40.0
+httpx>=0.25.0
+
 # Config
 pydantic-settings==2.5.0
 

@@ -179,6 +179,47 @@ export async function updateMe(patch: { name?: string; current_password?: string
   });
 }
 
+// ─── OAuth API ────────────────────────────────────────────────────────────────
+
+export interface OAuthUrlResponse {
+  url: string;
+}
+
+export async function getGoogleOAuthUrl(): Promise<OAuthUrlResponse> {
+  return request<OAuthUrlResponse>("/v1/auth/oauth/google/url");
+}
+
+export async function getGitHubOAuthUrl(): Promise<OAuthUrlResponse> {
+  return request<OAuthUrlResponse>("/v1/auth/oauth/github/url");
+}
+
+export async function exchangeOAuthCode(
+  provider: "google" | "github",
+  code: string,
+  redirectUri: string,
+): Promise<LoginResponse> {
+  return request<LoginResponse>(`/v1/auth/oauth/${provider}/callback`, {
+    method: "POST",
+    body: JSON.stringify({ code, redirect_uri: redirectUri }),
+  });
+}
+
+// ─── Password Reset API ──────────────────────────────────────────────────────
+
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  return request<{ message: string }>("/v1/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+  return request<{ message: string }>("/v1/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+}
+
 // ─── System Health ───────────────────────────────────────────────────────────────────
 
 export interface ServiceCheck {

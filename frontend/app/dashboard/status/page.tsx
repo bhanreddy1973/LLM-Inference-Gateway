@@ -16,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import { getReadiness, type ReadinessResponse, type ServiceCheck } from "@/lib/api";
+import { useDemo } from "@/lib/demo-context";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -153,8 +154,24 @@ export default function StatusPage() {
   const [lastChecked, setLC]    = useState("");
   const [history, setHistory]   = useState<HistoryEntry[]>([]);
   const [autoRefresh, setAR]    = useState(true);
+  const isDemo = useDemo();
 
   const check = useCallback(async () => {
+    if (isDemo) {
+      const demoData: ReadinessResponse = {
+        status: "ready",
+        checks: {
+          postgres: { status: "healthy", version: "16.2" },
+          redis: { status: "healthy", active_connections: 3 },
+          worker: { status: "healthy" },
+        },
+      };
+      setData(demoData);
+      setLC(timeNow());
+      setHistory((prev) => [{ ts: timeNow(), status: "healthy" }, ...prev.slice(0, 39)]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const r = await getReadiness();
@@ -170,7 +187,7 @@ export default function StatusPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isDemo]);
 
   // Set page title
   useEffect(() => { document.title = "Status · Acheron"; }, []);

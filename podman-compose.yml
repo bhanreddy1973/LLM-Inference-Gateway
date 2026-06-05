@@ -45,6 +45,9 @@ services:
       - "50051:50051"
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      - OPENROUTER_DISABLE_SSL_VERIFY=true
       - GRPC_PORT=50051
       - WORKER_ID=worker-1
 

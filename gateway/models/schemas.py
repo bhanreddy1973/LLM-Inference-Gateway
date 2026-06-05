@@ -96,6 +96,37 @@ class UserUpdateRequest(BaseModel):
     new_password: Optional[str] = Field(default=None, min_length=8, max_length=128)
 
 
+# ─── OAuth Schemas ─────────────────────────────────────────────────────────────
+
+class OAuthCallbackRequest(BaseModel):
+    """OAuth callback with authorization code."""
+    code: str
+    redirect_uri: str
+
+
+class OAuthUrlResponse(BaseModel):
+    """OAuth authorization URL response."""
+    url: str
+
+
+# ─── Password Reset Schemas ───────────────────────────────────────────────────
+
+class ForgotPasswordRequest(BaseModel):
+    """Request a password reset email."""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password with a valid token."""
+    token: str
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
+class MessageResponse(BaseModel):
+    """Generic message response."""
+    message: str
+
+
 # ─── Usage Log Schema ───────────────────────────────────────────────────────────────────
 
 class UsageLogEntry(BaseModel):

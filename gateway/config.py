@@ -11,6 +11,18 @@ class Settings(BaseSettings):
     # PostgreSQL
     database_url: str = "postgresql+asyncpg://gateway:gateway@localhost:5432/inference_gw"
 
+    @property
+    def async_database_url(self) -> str:
+        """Convert standard postgres URL to asyncpg format."""
+        url = self.database_url
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        # Remove channel_binding param (not supported by asyncpg)
+        if "channel_binding=" in url:
+            import re
+            url = re.sub(r"[&?]channel_binding=[^&]*", "", url)
+        return url
+
     # Redis
     redis_url: str = "redis://localhost:6379/0"
 
@@ -26,6 +38,9 @@ class Settings(BaseSettings):
     # gRPC Worker
     grpc_worker_host: str = "localhost"
     grpc_worker_port: int = 50051
+
+    # Inference mode: "grpc" (default) or "local" (in-process, no separate worker)
+    inference_mode: str = "grpc"
 
     # OAuth — Google
     google_client_id: Optional[str] = None

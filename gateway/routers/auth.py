@@ -179,10 +179,12 @@ async def google_oauth_callback(
             code=request.code,
             redirect_uri=request.redirect_uri,
         )
-    except Exception:
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to authenticate with Google. Please try again.",
+            detail=f"Google OAuth failed: {str(e)}",
         )
 
     service = OAuthService(db)
@@ -241,10 +243,12 @@ async def github_oauth_callback(
             code=request.code,
             redirect_uri=request.redirect_uri,
         )
-    except Exception:
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to authenticate with GitHub. Please try again.",
+            detail=f"GitHub OAuth failed: {str(e)}",
         )
 
     service = OAuthService(db)

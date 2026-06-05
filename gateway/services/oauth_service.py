@@ -1,5 +1,7 @@
 """OAuth service — handles Google and GitHub OAuth flows."""
 
+from urllib.parse import urlencode
+
 import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,8 +29,7 @@ class OAuthService:
             "access_type": "offline",
             "prompt": "consent",
         }
-        qs = "&".join(f"{k}={v}" for k, v in params.items())
-        return f"https://accounts.google.com/o/oauth2/v2/auth?{qs}"
+        return f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
 
     @staticmethod
     async def exchange_google_code(code: str, redirect_uri: str) -> dict:
@@ -66,8 +67,7 @@ class OAuthService:
             "redirect_uri": redirect_uri,
             "scope": "read:user user:email",
         }
-        qs = "&".join(f"{k}={v}" for k, v in params.items())
-        return f"https://github.com/login/oauth/authorize?{qs}"
+        return f"https://github.com/login/oauth/authorize?{urlencode(params)}"
 
     @staticmethod
     async def exchange_github_code(code: str, redirect_uri: str) -> dict:

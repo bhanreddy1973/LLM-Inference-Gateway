@@ -8,13 +8,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 
 from middleware.auth import RequestContext, validate_api_key
-from middleware.rate_limiter import RateLimitResult, rate_limiter
+from middleware.rate_limiter import rate_limiter
+from middleware.request_logger import request_logger
 from models.schemas import (
     ChatChoice,
     ChatMessage,
     ChatRequest,
     ChatResponse,
-    ErrorDetail,
     ErrorResponse,
     UsageInfo,
 )
@@ -84,6 +84,26 @@ async def chat_completion(
 
     # Build response
     completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
+
+    # Log request to ClickHouse (async, non-blocking)
+    await request_logger.log(
+        request_id=uuid.UUID(completion_id.replace("chatcmpl-", "").ljust(32, "0")),
+        user_id=ctx.user_id,
+        api_key_prefix=ctx.key_prefix,
+        model=request.model,
+        input_tokens=result["usage"]["input_tokens"],
+        output_tokens=result["usage"]["output_tokens"],
+        total_tokens=result["usage"]["total_tokens"],
+        max_tokens=max_tokens,
+        temperature=request.temperature,
+        stream=False,
+        time_to_first_token_ms=result["performance"]["time_to_first_token_ms"],
+        total_latency_ms=result["performance"]["total_latency_ms"],
+        worker_id=result["performance"]["worker_id"],
+        status_code=200,
+        finish_reason=result["finish_reason"],
+    )
+
     return ChatResponse(
         id=completion_id,
         created=int(time.time()),
@@ -153,6 +173,25 @@ async def chat_stream(
                 temperature=request.temperature,
             ):
                 if chunk["done"]:
+                    # Log to ClickHouse
+                    await request_logger.log(
+                        request_id=uuid.uuid4(),
+                        user_id=ctx.user_id,
+                        api_key_prefix=ctx.key_prefix,
+                        model=request.model,
+                        input_tokens=chunk["usage"]["input_tokens"],
+                        output_tokens=chunk["usage"]["output_tokens"],
+                        total_tokens=chunk["usage"]["total_tokens"],
+                        max_tokens=max_tokens,
+                        temperature=request.temperature,
+                        stream=True,
+                        time_to_first_token_ms=chunk["performance"]["time_to_first_token_ms"],
+                        total_latency_ms=chunk["performance"]["total_latency_ms"],
+                        worker_id=chunk["performance"]["worker_id"],
+                        status_code=200,
+                        finish_reason="stop",
+                    )
+
                     # Final chunk with usage
                     data = {
                         "id": completion_id,

@@ -22,7 +22,6 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import Link from "next/link";
 import {
   listApiKeys,
   streamChat,
@@ -766,8 +765,8 @@ function ModelPicker({ value, onChange }: { value: string; onChange: (v: string)
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PlaygroundPage() {
-  const [keys, setKeys] = useState<ApiKey[]>([]);
-  const [keysLoading, setKL] = useState(true);
+  const [, setKeys] = useState<ApiKey[]>([]);
+  const [, setKL] = useState(true);
   const [rawKey, setRawKey] = useState("");
   const isDemo = useDemo();
 

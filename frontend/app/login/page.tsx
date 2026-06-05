@@ -12,7 +12,6 @@ import {
   getGitHubOAuthUrl,
   exchangeOAuthCode,
 } from "@/lib/api";
-import { enterDemoMode } from "@/lib/demo";
 
 // ─── OAuth Button ─────────────────────────────────────────────────────────────
 function OAuthButton({
@@ -50,17 +49,7 @@ function LoginContent() {
   const [error, setError] = useState("");
 
   // Handle OAuth callback (code in URL query params)
-  useEffect(() => {
-    const code = searchParams.get("code");
-    const provider = searchParams.get("provider") as "google" | "github" | null;
-
-    if (code && provider) {
-      handleOAuthCallback(provider, code);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
-  async function handleOAuthCallback(provider: "google" | "github", code: string) {
+  const handleOAuthCallback = async (provider: "google" | "github", code: string) => {
     setOauthLoading(provider);
     setError("");
     try {
@@ -79,7 +68,17 @@ function LoginContent() {
     } finally {
       setOauthLoading(null);
     }
-  }
+  };
+
+  useEffect(() => {
+    const code = searchParams.get("code");
+    const provider = searchParams.get("provider") as "google" | "github" | null;
+
+    if (code && provider) {
+      handleOAuthCallback(provider, code);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   async function handleGoogleLogin() {
     setError("");

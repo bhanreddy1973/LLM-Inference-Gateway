@@ -8,7 +8,6 @@ import {
   Key,
   Loader2,
   Lock,
-  Pencil,
   Shield,
   User,
   Zap,

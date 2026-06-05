@@ -3,7 +3,6 @@
 import uuid
 from typing import AsyncGenerator
 
-import grpc
 from grpc import aio
 
 from config import settings
@@ -159,5 +158,13 @@ class InferenceClient:
             self._channel = None
 
 
-# Singleton instance
-inference_client = InferenceClient()
+# Singleton instance — use local inference if INFERENCE_MODE=local or worker dir exists alongside gateway
+import os
+
+_use_local = os.getenv("INFERENCE_MODE", "").lower() == "local"
+
+if _use_local:
+    from services.local_inference import LocalInferenceClient
+    inference_client = LocalInferenceClient()
+else:
+    inference_client = InferenceClient()

@@ -3,20 +3,32 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Mail } from "lucide-react";
+import { forgotPassword, ApiError } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail]     = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent]       = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
     setLoading(true);
-    // Simulate a short delay — real impl would call POST /v1/auth/forgot-password
-    await new Promise((r) => setTimeout(r, 900));
-    setLoading(false);
-    setSent(true);
+    setError("");
+
+    try {
+      await forgotPassword(email);
+      setSent(true);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.detail);
+      } else {
+        setError("Unable to connect to the server. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -49,7 +61,7 @@ export default function ForgotPasswordPage() {
                 If an account exists for <span className="text-zinc-300">{email}</span>, we sent a password reset link. Check your inbox (and spam).
               </p>
             </div>
-            <div className="flex flex-col gap-2 w-full">
+            <div className="flex w-full flex-col gap-2">
               <Link
                 href="/login"
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-zinc-50 text-sm font-semibold text-zinc-900 transition hover:-translate-y-0.5 hover:bg-white"
@@ -57,7 +69,7 @@ export default function ForgotPasswordPage() {
                 Back to sign in
               </Link>
               <button
-                onClick={() => { setSent(false); setEmail(""); }}
+                onClick={() => { setSent(false); setEmail(""); setError(""); }}
                 className="text-[13px] text-zinc-600 hover:text-zinc-400"
               >
                 Try a different email
@@ -68,7 +80,7 @@ export default function ForgotPasswordPage() {
           /* ── Form ── */
           <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-2">
-              <Link href="/login" className="flex items-center gap-1.5 text-[12px] text-zinc-600 transition hover:text-zinc-400 w-fit">
+              <Link href="/login" className="flex w-fit items-center gap-1.5 text-[12px] text-zinc-600 transition hover:text-zinc-400">
                 <ArrowLeft className="size-3.5" /> Back to sign in
               </Link>
               <h1 className="text-2xl font-semibold tracking-[-0.02em] text-zinc-50">Reset your password</h1>
@@ -78,6 +90,12 @@ export default function ForgotPasswordPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {error && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                  {error}
+                </div>
+              )}
+
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="email" className="text-[13px] font-medium text-zinc-400">Email address</label>
                 <div className="relative">
@@ -106,7 +124,7 @@ export default function ForgotPasswordPage() {
             </form>
 
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-[12px] text-zinc-600">
-              <p className="font-medium text-zinc-500 mb-1">Self-hosted instance?</p>
+              <p className="mb-1 font-medium text-zinc-500">Self-hosted instance?</p>
               Reset your password directly via the Settings page once signed in, or ask your instance admin to reset it via the backend.
             </div>
           </div>

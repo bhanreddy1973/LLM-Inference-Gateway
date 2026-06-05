@@ -1,7 +1,6 @@
 """SQLAlchemy ORM models for PostgreSQL."""
 
 import uuid
-from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
@@ -29,7 +28,7 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=True)  # Nullable for OAuth-only users
     name = Column(String(100), nullable=False)
     tier = Column(
         String(20),
@@ -37,6 +36,8 @@ class User(Base):
         default="free",
     )
     is_active = Column(Boolean, nullable=False, default=True)
+    oauth_provider = Column(String(20), nullable=True)  # "google" or "github"
+    oauth_id = Column(String(255), nullable=True)  # Provider user ID
     created_at = Column(DateTime(timezone=True), server_default=text("NOW()"))
     updated_at = Column(DateTime(timezone=True), server_default=text("NOW()"))
 
@@ -46,6 +47,23 @@ class User(Base):
     __table_args__ = (
         CheckConstraint("tier IN ('free', 'pro', 'enterprise')", name="check_user_tier"),
     )
+
+
+class PasswordResetToken(Base):
+    """Password reset token model."""
+
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    token_hash = Column(String(64), unique=True, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=text("NOW()"))
 
 
 class ApiKey(Base):

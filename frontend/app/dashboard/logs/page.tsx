@@ -14,6 +14,8 @@ import {
   Zap,
 } from "lucide-react";
 import { getLogs, type LogEntry, type LogsResponse } from "@/lib/api";
+import { useDemo } from "@/lib/demo-context";
+import { DEMO_LOGS } from "@/lib/demo-data";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -105,6 +107,7 @@ export default function LogsPage() {
   const [data, setData]           = useState<LogsResponse | null>(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState("");
+  const isDemo = useDemo();
 
   // Filters
   const [model, setModel]         = useState("");
@@ -117,6 +120,11 @@ export default function LogsPage() {
   const [expanded, setExpanded]   = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (isDemo) {
+      setData({ items: DEMO_LOGS, total: DEMO_LOGS.length, page: 1, page_size: 50 });
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -133,7 +141,7 @@ export default function LogsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, model, status, days]);
+  }, [page, model, status, days, isDemo]);
 
   // Set page title
   useEffect(() => { document.title = "Logs · Acheron"; }, []);

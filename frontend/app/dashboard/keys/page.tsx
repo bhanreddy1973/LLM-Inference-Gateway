@@ -361,7 +361,7 @@ function RevealKeyModal({ apiKey, onClose }: { apiKey: ApiKeyCreated; onClose: (
 
         <button onClick={onClose}
           className="mt-4 w-full rounded-xl bg-white py-2.5 text-[13px] font-medium text-zinc-900 transition hover:bg-zinc-100">
-          Done — I've saved it
+          Done &mdash; I&apos;ve saved it
         </button>
       </div>
     </ModalWrap>
@@ -385,7 +385,7 @@ function RevokeModal({ apiKey, onClose, onRevoke }: {
         <div className="mb-5 flex size-12 items-center justify-center rounded-xl bg-red-500/10">
           <Trash2 className="size-6 text-red-400" />
         </div>
-        <h2 className="text-[15px] font-semibold text-zinc-100">Revoke "{apiKey.name}"?</h2>
+        <h2 className="text-[15px] font-semibold text-zinc-100">Revoke &ldquo;{apiKey.name}&rdquo;?</h2>
         <p className="mt-2 text-[13px] text-zinc-500">
           This key will stop working immediately. Any app using it will start receiving 401 errors.
         </p>

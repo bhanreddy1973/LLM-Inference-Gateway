@@ -1,10 +1,6 @@
 """Tests for the circuit breaker pattern."""
 
 import time
-from unittest.mock import patch
-
-import sys
-sys.path.insert(0, "..")
 
 from circuit_breaker import CircuitBreaker, CircuitState
 

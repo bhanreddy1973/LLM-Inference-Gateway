@@ -1,8 +1,5 @@
 """Tests for the rate limiter logic (unit tests — no Redis required)."""
 
-import sys
-sys.path.insert(0, "..")
-
 from middleware.rate_limiter import RateLimitResult
 
 

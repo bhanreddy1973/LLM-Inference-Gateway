@@ -1,8 +1,5 @@
 """Tests for auth endpoints and JWT utilities."""
 
-import sys
-sys.path.insert(0, "..")
-
 from uuid import uuid4
 from services.user_service import UserService
 from utils.hashing import hash_password, verify_password, hash_api_key

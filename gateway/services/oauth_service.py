@@ -86,7 +86,14 @@ class OAuthService:
             )
             token_resp.raise_for_status()
             tokens = token_resp.json()
-            access_token = tokens["access_token"]
+
+            # Check for error response from GitHub
+            if "error" in tokens:
+                raise ValueError(f"GitHub token error: {tokens.get('error_description', tokens['error'])}")
+
+            access_token = tokens.get("access_token")
+            if not access_token:
+                raise ValueError(f"No access_token in GitHub response: {tokens}")
 
             # Get user profile
             user_resp = await client.get(

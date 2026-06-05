@@ -30,7 +30,7 @@ class PasswordResetService:
         """
         # Find user by email
         result = await self.db.execute(
-            select(User).where(User.email == email, User.is_active == True)
+            select(User).where(User.email == email, User.is_active.is_(True))
         )
         user = result.scalar_one_or_none()
         if not user:
@@ -66,7 +66,7 @@ class PasswordResetService:
         result = await self.db.execute(
             select(PasswordResetToken).where(
                 PasswordResetToken.token_hash == token_hash,
-                PasswordResetToken.used_at == None,
+                PasswordResetToken.used_at.is_(None),
                 PasswordResetToken.expires_at > datetime.now(timezone.utc),
             )
         )

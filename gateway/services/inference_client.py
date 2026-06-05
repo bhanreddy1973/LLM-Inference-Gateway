@@ -3,7 +3,6 @@
 import uuid
 from typing import AsyncGenerator
 
-import grpc
 from grpc import aio
 
 from config import settings

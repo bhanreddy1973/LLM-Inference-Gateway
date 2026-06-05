@@ -15,7 +15,6 @@ from models.schemas import (
     ChatMessage,
     ChatRequest,
     ChatResponse,
-    ErrorDetail,
     ErrorResponse,
     UsageInfo,
 )

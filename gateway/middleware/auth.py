@@ -5,7 +5,6 @@ Attaches user context to the request state for downstream handlers.
 """
 
 from dataclasses import dataclass
-from typing import Optional
 from uuid import UUID
 
 import redis.asyncio as redis

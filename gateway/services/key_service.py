@@ -125,8 +125,8 @@ class KeyService:
             .join(User, ApiKey.user_id == User.id)
             .where(
                 ApiKey.key_hash == key_hash,
-                ApiKey.is_active == True,
-                User.is_active == True,
+                ApiKey.is_active.is_(True),
+                User.is_active.is_(True),
             )
         )
         row = result.first()

@@ -1,7 +1,6 @@
 """Analytics service — queries ClickHouse for usage stats and time-series data."""
 
-from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from datetime import date, timedelta
 from uuid import UUID
 
 import clickhouse_connect

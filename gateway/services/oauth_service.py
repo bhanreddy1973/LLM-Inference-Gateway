@@ -1,8 +1,5 @@
 """OAuth service — handles Google and GitHub OAuth flows."""
 
-from typing import Optional
-from uuid import UUID
-
 import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

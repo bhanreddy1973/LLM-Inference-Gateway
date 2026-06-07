@@ -1,10 +1,12 @@
 """FastAPI application entry point."""
 
 import os
+import traceback
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from middleware.request_logger import request_logger
 from routers import auth, chat, health, keys, models, usage
@@ -28,6 +30,16 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+
+
+# Global exception handler — ensures errors return JSON (not HTML) with proper status
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {str(exc)}"},
+    )
 
 # CORS — allow frontend origins
 cors_origins_raw = os.getenv(
